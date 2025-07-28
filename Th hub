@@ -1,0 +1,224 @@
+loadstring([[
+local Players, RunService, UserInputService = game:GetService("Players"), game:GetService("RunService"), game:GetService("UserInputService")
+local player = Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local humanoid = char:WaitForChild("Humanoid")
+local hrp = char:WaitForChild("HumanoidRootPart")
+local pointPosition
+
+player.CharacterAdded:Connect(function(c)
+    char = c
+    humanoid = char:WaitForChild("Humanoid")
+    hrp = char:WaitForChild("HumanoidRootPart")
+    humanoid.WalkSpeed = 16
+    humanoid.JumpPower = 50
+end)
+
+pcall(function()
+    local old = game.CoreGui:FindFirstChild("InvisibleModMenu")
+    if old then old:Destroy() end
+end)
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "InvisibleModMenu"
+gui.Parent = game:GetService("CoreGui")
+gui.ResetOnSpawn = false
+
+local function createRGB(frame)
+    frame.BorderSizePixel = 3
+    RunService.Heartbeat:Connect(function()
+        frame.BorderColor3 = Color3.fromHSV((tick()*60)%360/360,1,1)
+    end)
+end
+
+-- Botão flutuante (quadrado com cantos arredondados)
+local floatBtn = Instance.new("TextButton")
+floatBtn.Size = UDim2.new(0,70,0,70)
+floatBtn.Position = UDim2.new(0,15,0.7,0)
+floatBtn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+floatBtn.Text = "TH HUB"
+floatBtn.TextColor3 = Color3.new(1,1,1)
+floatBtn.Font = Enum.Font.SourceSansBold
+floatBtn.TextSize = 18
+floatBtn.Parent = gui
+local fc = Instance.new("UICorner", floatBtn)
+fc.CornerRadius = UDim.new(0,15)  -- bordas arredondadas 15px
+createRGB(floatBtn)
+
+local dragging, dragInput, dragStart, startPos, targetPos = false, nil, nil, nil, floatBtn.Position
+floatBtn.InputBegan:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = i.Position
+        startPos = floatBtn.Position
+        i.Changed:Connect(function()
+            if i.UserInputState == Enum.UserInputState.End then dragging = false end
+        end)
+    end
+end)
+floatBtn.InputChanged:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = i
+    end
+end)
+RunService.RenderStepped:Connect(function()
+    if dragging and dragInput then
+        local d = dragInput.Position - dragStart
+        targetPos = UDim2.new(0, math.clamp(startPos.X.Offset + d.X, 0, workspace.CurrentCamera.ViewportSize.X - floatBtn.AbsoluteSize.X),
+                              0, math.clamp(startPos.Y.Offset + d.Y, 0, workspace.CurrentCamera.ViewportSize.Y - floatBtn.AbsoluteSize.Y))
+    end
+    local cp = floatBtn.Position
+    floatBtn.Position = UDim2.new(0, cp.X.Offset + (targetPos.X.Offset - cp.X.Offset) * 0.15,
+                                  0, cp.Y.Offset + (targetPos.Y.Offset - cp.Y.Offset) * 0.15)
+end)
+
+-- Menu
+local menu = Instance.new("Frame")
+menu.Size = UDim2.new(0,220,0,360)
+menu.Position = UDim2.new(0,80,0.7, -360)  -- iniciando oculto acima
+menu.BackgroundColor3 = Color3.fromRGB(0,0,0)
+menu.Visible = false
+menu.Parent = gui
+local um = Instance.new("UICorner", menu)
+um.CornerRadius = UDim.new(0,15)
+createRGB(menu)
+
+-- Título
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1,0,0,30)
+title.Position = UDim2.new(0,0,0,-35)
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.new(1,1,1)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 18
+title.Text = "GOZODELICIAKAKAJOTA HUB"
+title.Parent = menu
+
+-- Drag menu verticalmente
+local md, mdi, mds, mspos, mt = false, nil, nil, menu.Position, menu.Position
+menu.InputBegan:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+        md = true
+        mds = i.Position
+        mspos = menu.Position
+        i.Changed:Connect(function()
+            if i.UserInputState == Enum.UserInputState.End then md = false end
+        end)
+    end
+end)
+menu.InputChanged:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseMovement then
+        mdi = i
+    end
+end)
+RunService.RenderStepped:Connect(function()
+    if md and mdi then
+        local d = mdi.Position - mds
+        mt = UDim2.new(mspos.X.Scale, mspos.X.Offset,
+                       0, math.clamp(mspos.Y.Offset + d.Y, 0, workspace.CurrentCamera.ViewportSize.Y - menu.AbsoluteSize.Y))
+    end
+    local cp = menu.Position
+    menu.Position = UDim2.new(cp.X.Scale, cp.X.Offset + (mt.X.Offset - cp.X.Offset) * 0.15,
+                              cp.Y.Scale, cp.Y.Offset + (mt.Y.Offset - cp.Y.Offset) * 0.15)
+end)
+
+local function setBtnActive(b, a)
+    b.BackgroundColor3 = a and Color3.fromRGB(0,121,241) or Color3.fromRGB(50,50,50)
+end
+
+-- Invisibilidade para todos
+local invisBtn = Instance.new("TextButton")
+invisBtn.Size = UDim2.new(0,200,0,40); invisBtn.Position = UDim2.new(0,10,0,10)
+invisBtn.BackgroundColor3 = Color3.fromRGB(50,50,50); invisBtn.TextColor3 = Color3.new(1,1,1)
+invisBtn.Font = Enum.Font.SourceSansBold; invisBtn.TextSize = 20
+invisBtn.Text="🫥 Invisibilidade: OFF"; invisBtn.Parent = menu
+local invisible = false
+local function setInvisibility(state)
+    local chars = Players:GetPlayers()
+    for _, plr in pairs(chars) do
+        local c = plr.Character
+        if c then
+            for _, part in pairs(c:GetDescendants()) do
+                if part:IsA("BasePart") or part:IsA("Decal") then
+                    part.Transparency = state and 1 or 0
+                end
+            end
+        end
+    end
+end
+invisBtn.MouseButton1Click:Connect(function()
+    invisible = not invisible
+    invisBtn.Text = (invisible and "🫥 Invisibilidade: ON" or "🫥 Invisibilidade: OFF")
+    setBtnActive(invisBtn, invisible)
+    setInvisibility(invisible)
+end)
+
+-- Superman (25x velocidade e pulo)
+local supermanBtn = Instance.new("TextButton")
+supermanBtn.Size = UDim2.new(0,200,0,40); supermanBtn.Position = UDim2.new(0,10,0,60)
+supermanBtn.BackgroundColor3 = Color3.fromRGB(50,50,50); supermanBtn.TextColor3 = Color3.new(1,1,1)
+supermanBtn.Font = Enum.Font.SourceSansBold; supermanBtn.TextSize = 20
+supermanBtn.Text="🦸‍♂️ Superman: OFF"; supermanBtn.Parent = menu
+local supermanActive = false
+supermanBtn.MouseButton1Click:Connect(function()
+    supermanActive = not supermanActive
+    supermanBtn.Text = (supermanActive and "🦸‍♂️ Superman: ON" or "🦸‍♂️ Superman: OFF")
+    setBtnActive(supermanBtn, supermanActive)
+    if supermanActive then
+        humanoid.WalkSpeed = 16 * 25
+        humanoid.JumpPower = 50 * 25
+    else
+        humanoid.WalkSpeed = 16
+        humanoid.JumpPower = 50
+    end
+end)
+
+-- God Mode
+local godBtn = Instance.new("TextButton")
+godBtn.Size = UDim2.new(0,200,0,40); godBtn.Position = UDim2.new(0,10,0,110)
+godBtn.BackgroundColor3 = Color3.fromRGB(50,50,50); godBtn.TextColor3 = Color3.new(1,1,1)
+godBtn.Font = Enum.Font.SourceSansBold; godBtn.TextSize = 20
+godBtn.Text="🛡️ God Mode: OFF"; godBtn.Parent = menu
+local godActive = false
+godBtn.MouseButton1Click:Connect(function()
+    godActive = not godActive
+    godBtn.Text = (godActive and "🛡️ God Mode: ON" or "🛡️ God Mode: OFF")
+    setBtnActive(godBtn, godActive)
+    humanoid.MaxHealth = godActive and math.huge or 100
+    humanoid.Health = humanoid.MaxHealth
+end)
+
+-- Fixar ponto (um só, desativa anterior)
+local fixPointBtn = Instance.new("TextButton")
+fixPointBtn.Size = UDim2.new(0,200,0,40); fixPointBtn.Position = UDim2.new(0,10,0,160)
+fixPointBtn.BackgroundColor3 = Color3.fromRGB(50,50,50); fixPointBtn.TextColor3 = Color3.new(1,1,1)
+fixPointBtn.Font = Enum.Font.SourceSansBold; fixPointBtn.TextSize = 20
+fixPointBtn.Text="📍 Fixar Ponto"; fixPointBtn.Parent = menu
+
+local fixingActive = false
+
+local function isInsideMenu(pos)
+    return menu.Visible and
+        pos.X > menu.AbsolutePosition.X and pos.X < menu.AbsolutePosition.X + menu.AbsoluteSize.X and
+        pos.Y > menu.AbsolutePosition.Y and pos.Y < menu.AbsolutePosition.Y + menu.AbsoluteSize.Y
+end
+
+UserInputService.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        local mousePos = input.Position
+        if fixingActive and not isInsideMenu(mousePos) then
+            -- Raycast para posição do clique no mundo
+            local camera = workspace.CurrentCamera
+            local unitRay = camera:ScreenPointToRay(mousePos.X, mousePos.Y)
+            local ray = Ray.new(unitRay.Origin, unitRay.Direction * 1000)
+            local hit, pos = workspace:FindPartOnRay(ray, char)
+            if hit then
+                pointPosition = pos
+                fixPointBtn.BackgroundColor3 = Color3.fromRGB(0,121,241)
+                fixingActive = false
+            end
+        end
+    end
+end)
+
+fixPointBtn.MouseButton1Click:Connect# Th-hub1.0
